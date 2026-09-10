@@ -1,0 +1,22 @@
+# data, weights, run outputs
+data/
+runs/
+checks/
+*.pt
+*.onnx
+*.engine
+*.parquet
+hf_cache/
+
+# python / uv
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# misc
+.DS_Store
+*.log
+nohup.out
