@@ -30,6 +30,23 @@ classes are mapped onto it in `convert.py`.
 - `NOTES.md` — decisions, numbers, dead ends
 - `deliver/` — metrics, curves, rendered test pages, `classes.txt`
 
+## Results (phase 1, FINLAM test split, 48 pages)
+
+yolo26m at imgsz 1280, trained on the 623 FINLAM train pages only. Full tables, the article-cut
+metric and the runs that did not make it are in [`deliver/metrics.md`](deliver/metrics.md)
+and [`NOTES.md`](NOTES.md).
+
+| class | AP50 | P | R |
+|---|---|---|---|
+| ARTICLE-TITLE | 0.795 | 0.75 | 0.80 |
+| ARTICLE-SUBTITLE | 0.658 | 0.62 | 0.73 |
+| ARTICLE-INSIDEHEADING | 0.557 | 0.47 | 0.72 |
+| all classes (mAP50) | 0.579 | | |
+
+Article rule (new article at every title run, ground-truth zones and order): pairwise F1
+0.584 with predicted classes vs 0.633 with ground-truth classes. SECTION-TITLE has no
+instances in either dataset and is never predicted.
+
 ## Weights
 
 Published on the Hugging Face Hub: <https://huggingface.co/storytracer/cuttlefisher>
@@ -40,7 +57,7 @@ from huggingface_hub import hf_hub_download
 from ultralytics import YOLO
 
 model = YOLO(hf_hub_download("storytracer/cuttlefisher", "best.pt"))
-results = model.predict("page.jpg", imgsz=1024)
+results = model.predict("page.jpg", imgsz=1280, conf=0.35, max_det=600)
 ```
 
 ## Reference
