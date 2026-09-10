@@ -5,7 +5,7 @@ above all **article titles**, trained on the Teklia / LITIS *FINLAM* datasets.
 
 ## Why
 
-Downstream, [SquiddleOCR] cuts a page into articles with one rule: *a new article starts at
+Downstream, [SquiddleOCR](https://github.com/storytracer/squiddleocr) cuts a page into articles with one rule: *a new article starts at
 every title in reading order*. That is the bottom-up pipeline of Mocaër et al. (ICDAR-HIP
 2026): YOLO26 for blocks and classes, LayoutReader for order, then the cut. We already have
 layout regions and reading order from eynollah; what we lack is a reliable title class.
