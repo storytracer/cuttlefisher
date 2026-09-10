@@ -147,6 +147,18 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   both **plain concatenation** and **FINLAM oversampled ×4** (the train txt lists the FINLAM
   images four times) to separate "more data" from "dilution".
 
+## Phase 2 training
+
+- Runs: `p2_combined` (8580 pages, GPUs 0–3) and `p2_combined_x4` (10 449 pages, FINLAM
+  listed 4×, GPUs 4–7); yolo26m, imgsz 1280, batch 32, epochs 40, patience 10, cos_lr,
+  COCO-pretrained like phase 1; val = FINLAM val split.
+- **Near-OOM with `cache=ram`**: every DDP rank caches the full set (8 ranks × ~25 GB) and
+  the forked dataloader workers copy pages on write; RAM use hit 487 GB of 678 within the
+  first epoch and the harness started killing my background jobs. Both runs killed and
+  relaunched with **`cache=False`** (`train.py --cache False`): JPEG decoding across 32 workers
+  is seconds per epoch against ~3 min of GPU time, so the cache bought nothing here.
+  Steady state after the relaunch: see below.
+
 ## Inference settings (sweep on val with m1280, `runs/eval/sweep_m1280_val.log`)
 
 - `iou` has **no effect at all** (identical numbers for 0.5/0.6/0.7): YOLO26 is end-to-end,

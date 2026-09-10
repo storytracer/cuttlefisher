@@ -21,6 +21,9 @@ ap.add_argument("--patience", type=int, default=30)
 ap.add_argument("--device", default="0,1,2,3,4,5,6,7")
 ap.add_argument("--name", required=True)
 ap.add_argument("--fraction", type=float, default=1.0)
+ap.add_argument("--cache", default="ram", help="ram (fine for 623 pages) | disk | False. With DDP every rank "
+                "caches the whole set: 8 ranks x 25 GB for the 8.6k-page phase-2 set, and forked workers copy on "
+                "write on top — use False there, JPEG decoding is not the bottleneck")
 ap.add_argument("--extra", nargs="*", default=[], help="extra k=v overrides for ultralytics")
 a = ap.parse_args()
 
@@ -42,7 +45,7 @@ YOLO(weights).train(
     patience=a.patience,
     device=a.device,
     workers=8,
-    cache="ram",
+    cache={"False": False, "false": False}.get(a.cache, a.cache),
     cos_lr=True,
     max_det=600,  # pages have up to 524 boxes; the default 300 caps recall
     project=str(Path(__file__).resolve().parent / "runs"),  # relative "runs" gets nested under runs/detect/runs
