@@ -63,7 +63,33 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   the DDP end-of-training val double counts across ranks, so **all reported numbers come from a
   separate single-GPU `yolo val`**, never from the training log's last table.
 
+## Article rule ceiling (step 6, ground-truth classes)
+
+- `article_rule.py` with **ground-truth** classes on the 48 test pages: pairwise P 0.696,
+  R 0.580, **F1 0.633** (mean page F1 0.609). That is the ceiling of the rule itself.
+- Why so low: articles are contiguous in reading order (0 re-entries), but of 641 test
+  articles **246 have no title zone at all** (203 start with ARTICLE-TEXT: continuations,
+  briefs, fillers → merged into the preceding article, precision loss) and ~85 have more than
+  one title run (13 have ≥ 10: listings and briefs columns where each item has its own
+  headline but one `article_id` → split, recall loss). The detector gap is measured against
+  this ceiling, not against 1.0.
+
 ## Phase 1 training
 
 - Plan: two runs at a time, 4 GPUs each, batch 32 (8 per GPU, ~20 steps per epoch on
   623 pages), epochs 150, patience 30, cos_lr, cache=ram, max_det 600. `train.py`.
+- Ultralytics 8.4 nests a relative `project=runs` under `runs/detect/runs/<name>`; the first
+  four runs live there. `train.py` now passes an absolute project path.
+- Ultralytics' `best.pt` is chosen by fitness = 0.1·mAP50 + 0.9·mAP50-95, not by mAP50.
+- Val numbers below are from `evaluate.py` (single GPU, conf 0.001, iou 0.6, max_det 600) on
+  the 50 val pages; "title mAP50" = mean AP50 of ARTICLE-TITLE, ARTICLE-SUBTITLE,
+  ARTICLE-INSIDEHEADING (SECTION-TITLE has no instances).
+
+  | run | GPUs | best ep / stopped | val mAP50 | val mAP50-95 | title mAP50 | TITLE AP50 | SUBTITLE | INSIDEHEADING | time |
+  |---|---|---|---|---|---|---|---|---|---|
+  | s1024 | 0–3 | 101 / 131 | 0.577 | 0.432 | 0.604 | 0.776 | 0.576 | 0.459 | 14 min |
+  | s1280 | 4–7 | 75 / 105 | 0.589 | 0.454 | 0.626 | 0.789 | 0.560 | 0.527 | 16 min |
+
+- Both stopped early (patience 30) around epoch 100–130, i.e. **before the cosine schedule
+  reached its low-LR tail**. Worth one run with early stopping off once the size/imgsz choice
+  is made. 1280 > 1024 as the box statistics predicted, mostly on INSIDEHEADING.
