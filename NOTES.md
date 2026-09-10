@@ -97,6 +97,26 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   mAP50-95, and the box sizes argue for it → **imgsz 1280**.
 - Next: `m1280f` = same but patience 150 (full cosine schedule), and `l1280f` = yolo26l.
 
+## Inference settings (sweep on val with m1280, `runs/eval/sweep_m1280_val.log`)
+
+- `iou` has **no effect at all** (identical numbers for 0.5/0.6/0.7): YOLO26 is end-to-end,
+  NMS-free, so there is no NMS threshold to tune. Only `conf` matters.
+- Zone-level title F1 (GT zone gets the class of the best prediction with IoU ≥ 0.5):
+
+  | conf | P | R | F1 | rule pairwise F1 |
+  |---|---|---|---|---|
+  | 0.15 | 0.860 | 0.792 | 0.825 | 0.426 |
+  | 0.25 | 0.867 | 0.782 | 0.822 | 0.433 |
+  | 0.35 | 0.884 | 0.773 | 0.825 | 0.434 |
+  | 0.50 | 0.909 | 0.751 | 0.823 | 0.442 |
+
+  Flat plateau; conf only trades precision for recall. **conf 0.35** is the compromise for
+  the card; use 0.15–0.25 when recall matters more (a missed headline line splits a title run).
+- Article rule on val with **ground-truth** classes: P 0.719, R 0.309, F1 0.432 — the val
+  pages are full of listings with one headline per item under a single article id, so the
+  rule's ceiling is low there. With m1280 predictions: 0.434, i.e. no measurable detector cost
+  on val.
+
 - Both stopped early (patience 30) around epoch 100–130, i.e. **before the cosine schedule
   reached its low-LR tail**. Worth one run with early stopping off once the size/imgsz choice
   is made. 1280 > 1024 as the box statistics predicted, mostly on INSIDEHEADING.
