@@ -7,6 +7,7 @@
 Logs go to runs/<name>/ (ultralytics) and runs/<name>.log (stdout, when launched with nohup).
 """
 import argparse
+from pathlib import Path
 
 from ultralytics import YOLO
 
@@ -44,7 +45,7 @@ YOLO(weights).train(
     cache="ram",
     cos_lr=True,
     max_det=600,  # pages have up to 524 boxes; the default 300 caps recall
-    project="runs",
+    project=str(Path(__file__).resolve().parent / "runs"),  # relative "runs" gets nested under runs/detect/runs
     name=a.name,
     exist_ok=True,
     fraction=a.fraction,
