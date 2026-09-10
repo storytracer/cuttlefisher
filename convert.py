@@ -67,7 +67,7 @@ LALIBERTE_MAP = {
 
 DATASETS = {
     "finlam": dict(src=ROOT / "data/hf/finlam/data", article_key="article_id"),
-    "laliberte": dict(src=ROOT / "data/hf/laliberte/data", article_key="zone_article_id"),
+    "laliberte": dict(src=ROOT / "data/hf/laliberte/data", article_key="zone_article_ids"),
 }
 
 
@@ -82,13 +82,14 @@ def class_names_from_schema(pf: pq.ParquetFile) -> list[str]:
     return names
 
 
-def bbox(poly, w, h, percent):
+def bbox(poly, w, h, scale):
+    """scale: 1.0 for fractions (La Liberté), 100.0 for percentages (FINLAM), None for pixels."""
     xs = [p[0] for p in poly]
     ys = [p[1] for p in poly]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    if percent:
-        x0, x1 = x0 / 100 * w, x1 / 100 * w
-        y0, y1 = y0 / 100 * h, y1 / 100 * h
+    if scale:
+        x0, x1 = x0 / scale * w, x1 / scale * w
+        y0, y1 = y0 / scale * h, y1 / scale * h
     x0, x1 = max(0.0, min(w, x0)), max(0.0, min(w, x1))
     y0, y1 = max(0.0, min(h, y0)), max(0.0, min(h, y1))
     return x0, y0, x1, y1
@@ -113,7 +114,7 @@ def convert(name: str, limit: int | None = None):
 
     counts = {s: Counter() for s in ("train", "val", "test")}
     pages = Counter()
-    percent = None  # decided on the first page
+    scale = "unset"  # decided on the first page: 1.0 fractions, 100.0 percentages, None pixels
     for f in files:
         split = f.name.split("-")[0]
         (out / "images" / split).mkdir(parents=True, exist_ok=True)
@@ -136,16 +137,16 @@ def convert(name: str, limit: int | None = None):
                         im.convert("RGB").save(img_path, "JPEG", quality=92)
 
                 polys = row["zone_polygons"]
-                if percent is None and polys:
+                if scale == "unset" and polys:
                     mx = max(max(max(p) for p in poly) for poly in polys)
-                    percent = mx <= 100.0
-                    print(f"coordinates look like {'percentages' if percent else 'pixels'} (max {mx:.1f})")
+                    scale = 1.0 if mx <= 1.0 else 100.0 if mx <= 100.0 else None
+                    print(f"coordinates look like {dict([(1.0, 'fractions'), (100.0, 'percentages'), (None, 'pixels')])[scale]} (max {mx:.3f})")
 
                 lines, zones = [], []
                 for i, poly in enumerate(polys):
                     cname = mapping[src_names[row["zone_classes"][i]]]
                     cid = CLASS_ID[cname]
-                    x0, y0, x1, y1 = bbox(poly, w, h, percent)
+                    x0, y0, x1, y1 = bbox(poly, w, h, scale)
                     bw, bh = x1 - x0, y1 - y0
                     if bw < 1 or bh < 1:
                         continue
@@ -158,7 +159,7 @@ def convert(name: str, limit: int | None = None):
                     ))
                 (out / "labels" / split / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
                 (out / "meta" / split / f"{stem}.json").write_text(json.dumps(dict(
-                    newspaper=row["newspaper_name"], page_index=row["page_index"], width=w, height=h, zones=zones,
+                    newspaper=row.get("newspaper_name", name), page_index=row["page_index"], width=w, height=h, zones=zones,
                 ), ensure_ascii=False))
                 pages[split] += 1
         print(f"{f.name}: done, pages so far {dict(pages)}")

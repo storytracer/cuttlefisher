@@ -120,6 +120,33 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   The loss is all recall (0.58 → 0.50): a missed headline line inside a multi-line headline
   splits the title run into two articles.
 
+## Phase 1 published
+
+- https://huggingface.co/storytracer/cuttlefisher — `best.pt` = m1280, with `args.yaml`,
+  `classes.txt`, `results_test.md/.json`, `article_rule_test.md`, model card (`hf/README.md`).
+
+## Phase 2 data: Teklia/Newspapers-finlam-La-Liberte (2026-09-10)
+
+- 22 parquet files, 9.4 GB, 7957 / 446 / 433 pages, JPEG 2500 px high (~1775 wide).
+- Schema differs from the small set: coordinates are **fractions 0–1** (not percentages),
+  article column is `zone_article_ids` (33 399 of 1.81 M zones have `None`), extra
+  `zone_section_ids` (mostly None), no `newspaper_name`. `convert.py` handles all three.
+- **Only 9 of the 16 classes have instances.** Full train/val/test counts of the source
+  classes: HEADER-TITLE 1340/75/74, HEADER-TEXT 10452/561/634, ILLUSTRATION 21221/1207/1085,
+  TITLE 133971/7498/7382, TEXT 1376516/77979/75032, SUBTITLE 34953/1929/2021,
+  INSIDEHEADING 41155/2394/2232, TABLE 2818/167/152, ILLUSTRATEDTEXT 5622/328/339.
+  **SECTION-TITLE, ADVERTISEMENT, ANNOUNCEMENT, CAPTION, AUTHOR, TABLECONTENT, ASIDE: 0.**
+  So SECTION-TITLE cannot be learned from either dataset; class id 12 stays empty.
+- Mapping verified on 3 rendered train pages (`checks/laliberte/`): boxes tight, titles are
+  one box per line like FINLAM, a section head ("LA VIE FINANCIÈRE") is TITLE as in FINLAM.
+  **Label conflict:** La Liberté annotates advertisements as TEXT + ILLUSTRATION, never
+  ADVERTISEMENT, whereas FINLAM has an ADVERTISEMENT class (35 train boxes). Phase 2 will
+  push ads toward ARTICLE-TEXT.
+- Class dilution: 7957 single-newspaper pages vs 623 diverse ones; the FINLAM-only classes
+  (ANNOUNCEMENT, CAPTION, AUTHOR, ADVERTISEMENT) would be 13× rarer per epoch. Phase 2 runs
+  both **plain concatenation** and **FINLAM oversampled ×4** (the train txt lists the FINLAM
+  images four times) to separate "more data" from "dilution".
+
 ## Inference settings (sweep on val with m1280, `runs/eval/sweep_m1280_val.log`)
 
 - `iou` has **no effect at all** (identical numbers for 0.5/0.6/0.7): YOLO26 is end-to-end,
