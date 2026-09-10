@@ -3,4 +3,21 @@ name = "cuttlefisher"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "datasets>=5.0.1",
+    "huggingface-hub>=1.31.0",
+    "pillow>=12.3.0",
+    "pyarrow>=25.0.1",
+    "torch>=2.14.0",
+    "torchvision>=0.29.0",
+    "ultralytics>=8.4.146",
+]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126" }]
+torchvision = [{ index = "pytorch-cu126" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
