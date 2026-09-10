@@ -97,6 +97,29 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   mAP50-95, and the box sizes argue for it → **imgsz 1280**.
 - Next: `m1280f` = same but patience 150 (full cosine schedule), and `l1280f` = yolo26l.
 
+  | m1280f | 0–3 | 150 / 150 | 0.619 | 0.491 | 0.628 | 0.792 | 0.554 | 0.538 | 33 min |
+  | l1280f | 4–7 | 150 / 150 | 0.632 | 0.513 | 0.614 | 0.788 | 0.559 | 0.493 | 39 min |
+
+- Running the full cosine schedule (patience 150) did **not** help the title classes
+  (0.628 vs 0.663 for the early-stopped m1280); mAP50-95 crept up. yolo26l likewise: best
+  overall mAP50-95 (0.513) but the lowest title mAP50. Neither is worth the size. Dead end.
+- **Selection (phase 1): `m1280`.** On the stated criterion (val title mAP50) m1024 and m1280
+  tie within noise (0.672 vs 0.663 on 50 pages); the tie-break was decided before looking at
+  test, on val overall mAP50 (0.631 vs 0.605), mAP50-95 (0.491 vs 0.465) and the box-size
+  statistics. Test numbers, computed afterwards for both, confirm it (title mAP50 0.670 vs
+  0.645). Both test tables are in `deliver/`.
+
+## Phase 1 test results (48 pages, `deliver/test_m1280.md`)
+
+- m1280: mAP50 0.579 all classes, title mAP50 0.670; ARTICLE-TITLE AP50 0.795 (P 0.75 /
+  R 0.80), SUBTITLE 0.658, INSIDEHEADING 0.557. Weak classes: ARTICLE-TABLE 0.30 (recall
+  0.26), ANNOUNCEMENT 0.35, HEADER-TEXT 0.46; ADVERTISEMENT has 1 test instance, not
+  meaningful. The paper's 72.3 mAP50 is on La Liberté (single title, 8k pages); not comparable.
+- Article rule on test (conf 0.35): ground-truth classes F1 0.633, predicted 0.584 (m1024:
+  0.563). **The detector costs 0.05 pairwise F1**; zone-level title F1 0.805 (P 0.85, R 0.76).
+  The loss is all recall (0.58 → 0.50): a missed headline line inside a multi-line headline
+  splits the title run into two articles.
+
 ## Inference settings (sweep on val with m1280, `runs/eval/sweep_m1280_val.log`)
 
 - `iou` has **no effect at all** (identical numbers for 0.5/0.6/0.7): YOLO26 is end-to-end,

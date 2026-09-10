@@ -19,7 +19,8 @@ for r in runs:
     df = pd.read_csv(Path(r) / "results.csv")
     df.columns = [c.strip() for c in df.columns]
     for ax, (col, title) in zip(axes, panels):
-        ax.plot(df["epoch"], df[col], label=Path(r).name, lw=1.2)
+        d = df[df["epoch"] > 3] if "loss" in col else df  # the first epochs dwarf the loss axes
+        ax.plot(d["epoch"], d[col], label=Path(r).name, lw=1.2)
 for ax, (col, title) in zip(axes, panels):
     ax.set_title(title); ax.set_xlabel("epoch"); ax.grid(alpha=0.3)
 axes[0].legend(fontsize=8)
