@@ -89,6 +89,13 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   |---|---|---|---|---|---|---|---|---|---|
   | s1024 | 0–3 | 101 / 131 | 0.577 | 0.432 | 0.604 | 0.776 | 0.576 | 0.459 | 14 min |
   | s1280 | 4–7 | 75 / 105 | 0.589 | 0.454 | 0.626 | 0.789 | 0.560 | 0.527 | 16 min |
+  | m1024 | 0–3 | 68 / 98 | 0.605 | 0.465 | 0.672 | 0.822 | 0.655 | 0.539 | 15 min |
+  | m1280 | 4–7 | 78 / 108 | 0.631 | 0.491 | 0.663 | 0.818 | 0.607 | 0.563 | 24 min |
+
+- yolo26m is clearly better than yolo26s (+0.04–0.07 title mAP50). 1024 vs 1280 on m is
+  within val noise for titles (50 pages, 1198 TITLE boxes); 1280 wins overall mAP50 and
+  mAP50-95, and the box sizes argue for it → **imgsz 1280**.
+- Next: `m1280f` = same but patience 150 (full cosine schedule), and `l1280f` = yolo26l.
 
 - Both stopped early (patience 30) around epoch 100–130, i.e. **before the cosine schedule
   reached its low-LR tail**. Worth one run with early stopping off once the size/imgsz choice
