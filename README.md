@@ -47,6 +47,11 @@ Article rule (new article at every title run, ground-truth zones and order): pai
 0.584 with predicted classes vs 0.633 with ground-truth classes. SECTION-TITLE has no
 instances in either dataset and is never predicted.
 
+**Phase 2** (adding the 7 957 La Liberté pages) did not improve the title classes on this
+test split (title mAP50 0.670 → 0.642–0.668, SUBTITLE −0.09, article rule 0.584 → 0.53) while
+improving the generic layout classes; see `deliver/metrics.md`. The phase-1 model stays the
+default; the phase-2 model is on the Hub under `phase2/`.
+
 ## Weights
 
 Published on the Hugging Face Hub: <https://huggingface.co/storytracer/cuttlefisher>

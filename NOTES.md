@@ -157,7 +157,38 @@ Running log of decisions, numbers and dead ends. Newest at the bottom of each se
   first epoch and the harness started killing my background jobs. Both runs killed and
   relaunched with **`cache=False`** (`train.py --cache False`): JPEG decoding across 32 workers
   is seconds per epoch against ~3 min of GPU time, so the cache bought nothing here.
-  Steady state after the relaunch: see below.
+  Steady state after the relaunch: 19 GB RAM, GPUs at 100 %, ~2.4 / 2.9 min per epoch.
+- Both stopped early (patience 10): p2_combined best epoch 29 of 39 (1.55 h), p2_combined_x4
+  best epoch 30 of 40 (1.95 h).
+
+### Phase 2 results (`evaluate.py`, imgsz 1280; m1280 = phase 1 for reference)
+
+  | model | val mAP50 | val mAP50-95 | val title | test mAP50 | test mAP50-95 | test title | TITLE | SUBTITLE | INSIDEHEADING | ANNOUNC. | CAPTION | AUTHOR | TABLE | rule F1 | zone title F1 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | m1280 (phase 1) | 0.631 | 0.491 | 0.663 | 0.579 | 0.429 | **0.670** | 0.795 | **0.658** | 0.557 | 0.345 | 0.664 | 0.519 | 0.303 | **0.584** | 0.805 |
+  | p2_combined | 0.596 | 0.474 | 0.637 | 0.552 | 0.441 | 0.668 | **0.812** | 0.567 | **0.624** | 0.291 | 0.599 | 0.508 | 0.338 | 0.542 | 0.796 |
+  | p2_combined_x4 | **0.648** | **0.527** | 0.661 | **0.585** | **0.456** | 0.642 | 0.783 | 0.553 | 0.589 | 0.382 | 0.699 | 0.525 | 0.372 | 0.527 | 0.807 |
+
+  (test columns; rule F1 = article rule pairwise F1 at conf 0.35, ceiling 0.633.)
+
+- **The extra 7 957 single-newspaper pages do not help the title classes on the diverse
+  test set.** Title mAP50 is flat (plain) or −0.03 (×4); ARTICLE-TITLE moves ±0.02;
+  ARTICLE-SUBTITLE drops 0.09 in both variants (La Liberté's subtitle convention evidently
+  differs from the small set's); INSIDEHEADING gains 0.03–0.07. The article rule gets
+  **worse** (0.584 → 0.54 / 0.53): the phase-2 models produce more spurious title zones
+  (197 / 167 fp vs 142) at equal recall.
+- What the extra data does help: general layout classes (ARTICLE-TEXT 0.811 → 0.835,
+  ILLUSTRATION 0.854 → 0.876, TABLE 0.30 → 0.37), hence the higher mAP50-95 everywhere.
+- Plain concatenation dilutes the FINLAM-only classes (CAPTION 0.664 → 0.599, ANNOUNCEMENT
+  0.345 → 0.291); **oversampling FINLAM ×4 recovers them** (CAPTION 0.699, ANNOUNCEMENT
+  0.382) and gives the best overall val numbers. So if a phase-2 model is used, it is the ×4 one.
+- **Decision: phase 1 `m1280` stays the default `best.pt`** (the goal is title precision and
+  recall for the article cut, and it wins on SUBTITLE, the rule F1, and title precision).
+  `p2_combined_x4` is uploaded as `phase2/best.pt` for users who want the better layout
+  classes, with its own results files.
+- Not tried, would be the next things: fine-tune the phase-2 model on FINLAM alone for a few
+  epochs (keep the layout gains, re-learn the FINLAM title conventions); drop La Liberté's
+  SUBTITLE boxes from the mapping; La Liberté ads → ADVERTISEMENT would need re-labelling.
 
 ## Inference settings (sweep on val with m1280, `runs/eval/sweep_m1280_val.log`)
 

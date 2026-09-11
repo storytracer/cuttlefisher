@@ -38,9 +38,14 @@ Code, notes and full metrics: <https://github.com/storytracer/cuttlefisher>.
 | `classes.txt` | class names in id order |
 | `results_test.md` / `.json` | per-class P/R/AP50/AP50-95 on the FINLAM test split |
 | `article_rule_test.md` | article-cut metric (see below) |
+| `phase2/best.pt` | **phase 2**: same architecture, trained on FINLAM (oversampled ×4) + the 7 957 La Liberté pages |
+| `phase2/args.yaml`, `phase2/results_test.*`, `phase2/article_rule_test.md` | the same for the phase-2 model |
 
-A phase-2 model trained on FINLAM + La Liberté will be added under `phase2/` if it improves
-the diverse test split; this card will say so.
+**Which one?** `best.pt` (phase 1) for the article cut: it has the best subtitle AP, the
+best article-rule score and the fewest spurious titles on the diverse test split.
+`phase2/best.pt` if you want the better generic layout classes (text, illustration, table:
++0.02–0.07 AP50) and can live with weaker subtitles; its title detection is on par. Numbers
+for both are in the results section.
 
 ## Usage
 
@@ -132,6 +137,30 @@ because many FINLAM articles have no title or several. Zone-level title F1 is 0.
 
 The paper reports 72.3 mAP50 on *La Liberté* (one newspaper, 8k training pages); the numbers
 above are on a 149-newspaper test set and are not comparable.
+
+### Phase 2 (`phase2/best.pt`) on the same test split
+
+Trained on FINLAM (listed 4×) + La Liberté train (7 957 pages), 40 epochs, patience 10,
+otherwise the phase-1 recipe. La Liberté's released annotations populate only 9 of its 16
+classes (no SECTION-TITLE, ADVERTISEMENT, ANNOUNCEMENT, CAPTION, AUTHOR) and label
+advertisements as text.
+
+| | phase 1 `best.pt` | phase 2 `phase2/best.pt` |
+|---|---|---|
+| mAP50 / mAP50-95 (12 classes) | 0.579 / 0.429 | **0.585 / 0.456** |
+| title classes mAP50 | **0.670** | 0.642 |
+| ARTICLE-TITLE AP50 | **0.795** | 0.783 |
+| ARTICLE-SUBTITLE AP50 | **0.658** | 0.553 |
+| ARTICLE-INSIDEHEADING AP50 | 0.557 | **0.589** |
+| ARTICLE-TEXT / ILLUSTRATION / TABLE AP50 | 0.811 / 0.854 / 0.303 | **0.835 / 0.876 / 0.372** |
+| CAPTION / ANNOUNCEMENT / AUTHOR AP50 | 0.664 / 0.345 / 0.519 | **0.699 / 0.382 / 0.525** |
+| article rule pairwise F1 (ceiling 0.633) | **0.584** | 0.527 |
+| zone-level title P / R | **0.851** / 0.763 | 0.833 / **0.782** |
+
+The extra 8 000 single-newspaper pages improve the generic layout classes but not the
+title classes on the diverse test set, and the article cut gets worse because of more
+spurious titles. Full details, including the plain-concatenation variant, in the
+repository's `deliver/metrics.md`.
 
 ## Citation
 

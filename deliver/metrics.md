@@ -75,6 +75,35 @@ recall: a headline line that is missed or matched to a non-title prediction spli
 multi-line title run into two articles. The ceiling itself is low because 246 of the 641
 test articles have no title zone at all and ~85 contain several title runs (listings).
 
+## Phase 2: adding La Liberté (7 957 pages of one newspaper, 1925–28)
+
+Same recipe (yolo26m, imgsz 1280, batch 32 on 4 GPUs, cos_lr), 40 epochs with patience 10,
+La Liberté's 16 classes mapped onto the 13 (its released annotations populate only 9 of
+them — no SECTION-TITLE, ADVERTISEMENT, ANNOUNCEMENT, CAPTION, AUTHOR — and label
+advertisements as text). Two variants: plain concatenation, and FINLAM oversampled ×4 to
+counter the 13:1 page imbalance. Evaluated on the FINLAM splits only.
+
+| model | val mAP50 | val title mAP50 | test mAP50 | test mAP50-95 | test title mAP50 | TITLE | SUBTITLE | INSIDEHEADING | article rule F1 | zone title F1 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| phase 1 `m1280` | 0.631 | 0.663 | 0.579 | 0.429 | **0.670** | 0.795 | **0.658** | 0.557 | **0.584** | 0.805 |
+| `p2_combined` | 0.596 | 0.637 | 0.552 | 0.441 | 0.668 | **0.812** | 0.567 | **0.624** | 0.542 | 0.796 |
+| `p2_combined_x4` | **0.648** | 0.661 | **0.585** | **0.456** | 0.642 | 0.783 | 0.553 | 0.589 | 0.527 | 0.807 |
+
+Other test classes, phase 1 → plain → ×4: ARTICLE-TEXT 0.811 → 0.831 → 0.835,
+ILLUSTRATION 0.854 → 0.869 → 0.876, ARTICLE-TABLE 0.303 → 0.338 → 0.372,
+CAPTION 0.664 → 0.599 → 0.699, ANNOUNCEMENT 0.345 → 0.291 → 0.382, AUTHOR 0.519 → 0.508 → 0.525.
+
+**Verdict: the extra 8 000 single-title pages do not help the diverse test split where it
+matters.** Title mAP50 is flat or slightly down, ARTICLE-SUBTITLE loses 0.09 (the two
+datasets' subtitle conventions differ), and the article rule gets worse (0.584 → 0.53–0.54)
+because the phase-2 models emit more spurious title zones at equal recall. They do improve the
+generic layout classes (text, illustration, table) and mAP50-95, and oversampling FINLAM ×4 is
+necessary to keep the FINLAM-only classes (caption, announcement) from being diluted away.
+
+Phase 1 `m1280` remains the delivered `best.pt`; `p2_combined_x4` is on the Hub under
+`phase2/` for users who want the better layout classes. Tables: `test_p2_*.md`,
+`article_rule_p2_*.md`, curves in `curves_phase2.png`.
+
 ## Inference settings
 
 `iou` has no effect (YOLO26 is end-to-end, NMS-free). `conf` only trades precision for
