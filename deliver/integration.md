@@ -120,6 +120,8 @@ run in the reference implementation — if your reading order interleaves them, 
 
 ## Later
 
-Phase 2 (FINLAM + 8k La Liberté pages) is training. If it improves the diverse test split it
-will be uploaded to the same Hub repo under a second file name, and the model card will say
-which is which; `best.pt` at the pinned revision above stays the phase-1 model.
+Phase 2 (FINLAM ×4 + 7 957 La Liberté pages) is done and is on the Hub as `phase2/best.pt`.
+It did **not** improve the title classes on the diverse test split (title mAP50 0.670 → 0.642,
+SUBTITLE 0.658 → 0.553, article rule 0.584 → 0.527 because of more spurious titles) while
+improving text / illustration / table AP50 by 0.02–0.07. **Keep using `best.pt` (phase 1) for
+the article cut.** `best.pt` at the pinned revision above is unchanged.
